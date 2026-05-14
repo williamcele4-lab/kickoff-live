@@ -1,0 +1,135 @@
+⚽ KickOff Live
+Real-time football scores for South African (PSL, Nedbank Cup, AFCON) and European leagues (Premier League, Champions League, La Liga, Bundesliga, Serie A, Ligue 1).
+Built with: Node.js · Express · Socket.io · API-Football
+---
+🚀 Quick Start (5 minutes)
+Step 1 — Get a Free API Key
+Go to https://www.api-football.com
+Click "Get your API key" → Sign up (free)
+Find your key in the Dashboard → API Key section
+Free tier: 100 requests/day (plenty for personal use)
+Step 2 — Install & Configure
+```bash
+# Clone or download this project, then:
+cd kickoff-live
+
+# Install dependencies
+npm install
+
+# Create your .env file
+cp .env.example .env
+
+# Edit .env and paste your API key
+nano .env   # or open in your code editor
+```
+Your `.env` file should look like:
+```
+API_FOOTBALL_KEY=abc123yourkeyhere
+PORT=3000
+REFRESH_INTERVAL=60000
+```
+Step 3 — Run It
+```bash
+# Production
+npm start
+
+# Development (auto-restarts on file changes)
+npm run dev
+```
+Open http://localhost:3000 in your browser. 🎉
+---
+📡 How It Works
+```
+API-Football ──(every 15min)──► Node.js Server ──(WebSocket)──► Browser
+                                      │
+                              (live-only every 60s)
+                              when live matches exist
+```
+Startup: fetches today's fixtures for all 10 leagues
+Every 15 minutes: full refresh of all fixtures + standings
+Every 60 seconds (only when live matches exist): fetches live scores only (1 API call)
+Socket.io broadcasts every update instantly to all connected browsers
+Browser re-renders in real-time without page reload
+---
+🌍 Leagues Covered
+League	ID	Country
+PSL (Premier Soccer League)	288	🇿🇦 South Africa
+Nedbank Cup	672	🇿🇦 South Africa
+AFCON	6	🌍 Africa
+AFCON Qualifying	29	🌍 Africa
+Premier League	39	🏴󠁧󠁢󠁥󠁮󠁧󠁿 England
+UEFA Champions League	2	🏆 Europe
+La Liga	140	🇪🇸 Spain
+Bundesliga	78	🇩🇪 Germany
+Serie A	135	🇮🇹 Italy
+Ligue 1	61	🇫🇷 France
+---
+☁️ Deploy to the Web (Free Hosting)
+Option A: Railway (Recommended — Easiest)
+Push your project to GitHub
+Go to https://railway.app → New Project → Deploy from GitHub
+Add environment variable: `API_FOOTBALL_KEY=your_key_here`
+Done — Railway gives you a public URL
+Option B: Render
+Push to GitHub
+Go to https://render.com → New Web Service → Connect repo
+Build command: `npm install`
+Start command: `npm start`
+Add env var `API_FOOTBALL_KEY`
+Option C: Heroku
+```bash
+heroku create kickoff-live-yourname
+heroku config:set API_FOOTBALL_KEY=your_key_here
+git push heroku main
+```
+---
+📁 Project Structure
+```
+kickoff-live/
+├── server/
+│   └── index.js        ← Backend (Express + Socket.io + API fetching)
+├── public/
+│   └── index.html      ← Frontend (all HTML/CSS/JS in one file)
+├── .env.example        ← Copy this to .env and add your key
+├── package.json
+└── README.md
+```
+---
+🔧 Customisation
+Add more leagues
+In `server/index.js`, add to the `LEAGUES` array:
+```js
+{ id: 103, name: "Eliteserien", flag: "🇳🇴", country: "Norway", group: "europe" },
+```
+Find league IDs at: https://www.api-football.com/documentation-v3#tag/Leagues
+Change refresh rate
+In `.env`:
+```
+REFRESH_INTERVAL=30000   # 30 seconds (uses more API calls)
+```
+Add more standings in sidebar
+In `server/index.js`, add to the standings fetch section:
+```js
+cache.standings[140] = await fetchStandings(140, season); // La Liga
+```
+Then add a new `<div class="side-card">` in `public/index.html`.
+---
+🆓 API Free Tier Limits
+The free tier gives you 100 requests/day. Here's how this app uses them:
+Action	Calls
+Full refresh (10 leagues + 3 standings)	~13 calls
+Live-only update	1 call
+A typical matchday: ~13 (startup) + 24 (hourly full refreshes) + ~50 (live updates during 3 matches) = ~87 calls — within the free limit.
+To stay safe, set `REFRESH_INTERVAL=120000` (2 minutes) on busy match days.
+---
+🐛 Troubleshooting
+No matches showing?
+Check your API key is correct in `.env`
+Check the server console for error messages
+Visit `http://localhost:3000/api/health` to see API status
+"401 Unauthorized" in console?
+Your API key is wrong or not set
+No PSL matches?
+PSL uses league ID 288. Confirm at https://www.api-football.com/documentation-v3#tag/Leagues/operation/get-leagues
+Standings not loading?
+Standings require a valid season year. The app uses `new Date().getFullYear()`. If it's pre-season, try `season - 1`.
